@@ -74,3 +74,60 @@ Jest는 기본적으로 뒤에 `.spec.ts` 로 끝나는 파일을 자동으로 �
 },
 ...
 ```
+
+## 테스트 전 Config 설정
+
+ts-jest의 경우 기본적으로 tsconfig.json 파일을 참조하여 테스트를 실행시킵니다. 하지만 rootDir이나 outDir 등의 설정이 있을 경우 ts-jest가 정상적으로 동작하지 않을 수 있습니다. 예를 들어,
+절대 경로를 사용하여 모듈을 import하는 경우에는 tsconfig.json의 baseUrl과 paths 설정을 반드시 추가해주어야 합니다. 따라서 tsconfig.json 파일을 다음과 같이 수정해주어야 합니다.
+
+```json
+//tsconfig.json
+...
+  "compilerOptions": {
+	"baseUrl": "./",
+	"paths": {
+	  "@src/*": ["src/*"]
+	},
+	...
+  },
+...
+```
+
+또한 ts-jest의 설정 파일을 따로 만들어주거나 package.json에 다음과 같이 설정을 추가해주면 됩니다.
+
+```typescript
+//jest.config.js
+module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  moduleNameMapper: {
+    '^@src/(.*)$': '<rootDir>/$1',
+  },
+};
+```
+
+```json
+//package.json
+...
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^@src/(.*)$": "<rootDir>/$1"
+    }
+  }
+...
+```
