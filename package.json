@@ -9,24 +9,39 @@
     "prebuild": "rimraf dist",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "nest start",
-    "start:dev": "nest start --watch",
-    "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "jest",
+    "start": "cross-env NODE_ENV=local nest start",
+    "start:dev": "cross-env NODE_ENV=dev nest start --watch",
+    "start:debug": "cross-env NODE_ENV=dev nest start --debug --watch",
+    "start:prod": "npm run build && cross-env NODE_ENV=prod node dist/main",
+    "typeorm": "cross-env NODE_ENV=local ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
+    "lint": "eslint \"{src,apps,libs}/**/*.ts\" --fix",
+    "test": "jest --modulePath=src",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "postinstall": "patch-package"
   },
   "dependencies": {
+    "@nestjs/apollo": "^10.2.0",
     "@nestjs/common": "^9.0.0",
+    "@nestjs/config": "^2.3.1",
     "@nestjs/core": "^9.0.0",
+    "@nestjs/graphql": "^10.2.0",
     "@nestjs/platform-express": "^9.0.0",
+    "@nestjs/typeorm": "^9.0.1",
+    "apollo-server-core": "^3.12.0",
+    "apollo-server-express": "^3.12.0",
+    "class-transformer": "^0.5.1",
+    "cross-env": "^7.0.3",
+    "graphql": "^16.6.0",
+    "mysql": "^2.18.1",
+    "patch-package": "^6.5.1",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
-    "rxjs": "^7.2.0"
+    "rxjs": "^7.2.0",
+    "typeorm": "^0.3.12",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^9.0.0",
@@ -66,6 +81,9 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^@src/(.*)$": "<rootDir>/$1"
+    }
   }
 }

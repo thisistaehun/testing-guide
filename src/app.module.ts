@@ -1,10 +1,25 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { ConfigModule } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { configOptions } from './common/options';
+import { ormOptions } from './common/ormconfig';
+import { GraphQLWithUploadModule } from './graphql.module';
+import { MyModule } from './modules/my/my.module';
+
+const ENV = process.env.NODE_ENV;
 
 @Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [
+    ConfigModule.forRoot(configOptions),
+    TypeOrmModule.forRoot(ormOptions),
+    GraphQLWithUploadModule.forRoot(),
+    MyModule,
+  ],
+  providers: [
+    {
+      provide: 'NODE_ENV',
+      useValue: ENV,
+    },
+  ],
 })
 export class AppModule {}
