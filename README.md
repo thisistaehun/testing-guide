@@ -133,3 +133,8 @@ module.exports = {
 ```
 
 다음과 같이 설정했다면 절대 경로로 import 해오는 모든 모듈의 path를 `@src/~` 로 설정해주어야 합니다. 이렇게 설정해주면 ts-jest가 정상적으로 동작하게 됩니다.
+`@src` 는 `src` 로 대체되며, `@src/common/common.entity.ts` 는 `src/common/common.entity.ts` 로 대체됩니다.
+
+```typescript
+import { CommonEntity } from '@src/common/common.entity';
+```

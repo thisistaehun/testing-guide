@@ -1,7 +1,7 @@
 import { ConfigModuleOptions } from '@nestjs/config';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
-import { baseConfig } from './baseconfig';
+import { baseConfig } from './base.config';
 
 const ENV = process.env.NODE_ENV;
 dotenv.config({
