@@ -11,10 +11,10 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { uuid } from './utils/uuid-transformer';
+import { uuid } from '../utils/uuid-transformer';
 
 @ObjectType()
-export class CommonEntity extends BaseEntity {
+export abstract class CommonEntity extends BaseEntity {
   @PrimaryGeneratedColumn()
   @Exclude()
   id: number;

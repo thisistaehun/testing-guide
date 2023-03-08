@@ -4,7 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { configOptions } from './common/options';
 import { ormOptions } from './common/orm.config';
 import { GraphQLWithUploadModule } from './graphql.module';
-import { MyModule } from './modules/my/my.module';
+import { UsersModule } from './modules/users/users.module';
 
 const ENV = process.env.NODE_ENV;
 
@@ -13,7 +13,7 @@ const ENV = process.env.NODE_ENV;
     ConfigModule.forRoot(configOptions),
     TypeOrmModule.forRoot(ormOptions),
     GraphQLWithUploadModule.forRoot(),
-    MyModule,
+    UsersModule,
   ],
   providers: [
     {

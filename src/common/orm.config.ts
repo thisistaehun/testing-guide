@@ -1,6 +1,6 @@
+import { User } from '@src/modules/users/entities/user.entity';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
-import { My } from 'src/modules/my/entities/my.entity';
 import { DataSourceOptions } from 'typeorm';
 
 const ENV = process.env.NODE_ENV;
@@ -15,5 +15,5 @@ export const ormOptions: DataSourceOptions = {
   logger: 'file',
   synchronize: true,
   charset: 'utf8mb4',
-  entities: [My],
+  entities: [User],
 };
