@@ -210,7 +210,7 @@ export class UsersService {
 - `@InjectRepository(User)` 를 통해 주입받은 `Repository<User>`
 - `UpdateUserTransaction` 을 통해 주입받은 `UpdateUserTransaction`
 
-따라서 테스트 코드를 작성할 때는 이 두 종속성을 모두 주입해주어야 합니다. 이때, 테스트 로직이 DB에 직접 접근하는 것은 데이터 손실의 위험이 있으므로, mock 객체를 다음과 같이 생성하여 mockRepository와 mockUpdateUserTransaction을 주입해주어야 합니다.
+따라서 테스트 코드를 작성할 때는 이 두 종속성을 모두 주입해주어야 합니다. 이때, 테스트 로직이 DB에 직접 접근하는 것은 데이터 손실의 위험이 있으므로, Mock Repository와 Mock Transaction을 만들어서 주입해주어야 합니다.
 
 ### users.service.spec.ts
 
@@ -218,21 +218,63 @@ export class UsersService {
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from './entities/user.entity';
-import { UpdateUserTransaction } from './transactions/update-user.transaction';
-import { UsersService } from './users.service';
+import { CreateUserInput } from '../dto/create-user.input';
+import { UpdateUserInput } from '../dto/update-user.input';
+import { User } from '../entities/user.entity';
+import { UpdateUserTransaction } from '../transactions/update-user.transaction';
+import { UsersService } from '../users.service';
 
-const mockRepository = {
-  create: jest.fn(),
-  save: jest.fn(),
-  find: jest.fn(),
-  findOne: jest.fn(),
-  delete: jest.fn(),
-};
+const mockUsers: User[] = [];
 
-const mockUpdateUserTransaction = {
-  run: jest.fn(),
-};
+class MockRepository {
+  async create(createUserInput: CreateUserInput): Promise<User> {
+    const user: User = new User({
+      name: createUserInput.name,
+      age: createUserInput.age,
+    });
+    return user;
+  }
+
+  async save(user: User): Promise<User> {
+    const newUser: User = await Promise.resolve(user);
+    mockUsers.push(newUser);
+    return newUser;
+  }
+
+  async find(): Promise<User[]> {
+    return mockUsers;
+  }
+
+  async findOne({ where: { code } }): Promise<User> {
+    for (const user of mockUsers) {
+      if (user.code === code) {
+        return user;
+      }
+    }
+  }
+
+  async update(updateUserInput: UpdateUserInput) {
+    const user: User = await this.findOne({
+      where: { code: updateUserInput.code },
+    });
+    user.name = updateUserInput.name;
+    user.age = updateUserInput.age;
+    return user;
+  }
+
+  async delete(code: string): Promise<void> {
+    mockUsers.filter((user) => user.code !== code);
+  }
+}
+
+class MockUpdateUserTransaction {
+  constructor(private readonly repository: MockRepository) {}
+
+  async run({ updateUserInput }: { updateUserInput: UpdateUserInput }) {
+    await this.repository.update(updateUserInput);
+    return this.repository.findOne({ where: { code: updateUserInput.code } });
+  }
+}
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -243,8 +285,8 @@ describe('UsersService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UsersService,
-        { provide: getRepositoryToken(User), useValue: mockRepository },
-        { provide: UpdateUserTransaction, useValue: mockUpdateUserTransaction },
+        { provide: getRepositoryToken(User), useClass: MockRepository },
+        { provide: UpdateUserTransaction, useClass: MockUpdateUserTransaction },
       ],
     }).compile();
 
@@ -253,15 +295,68 @@ describe('UsersService', () => {
     updateUserTransaction = module.get<UpdateUserTransaction>(
       UpdateUserTransaction
     );
+
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
+
+  describe('create', () => {
+    it('should create a user', async () => {
+      const createUserInput: CreateUserInput = {
+        name: 'test',
+        age: 20,
+      };
+      const result = await service.create(createUserInput);
+      expect(result.name).toEqual(createUserInput.name);
+      expect(result.age).toEqual(createUserInput.age);
+    });
+
+    afterAll(() => {
+      mockUsers.pop();
+      expect(mockUsers.length).toEqual(0);
+    });
+  });
+
+  describe('findAll', () => {
+    it('should return an array of users', async () => {
+      const result = mockUsers;
+      expect(await service.findAll()).toBe(result);
+    });
+  });
+
+  describe('findOne', () => {
+    let code: string;
+    beforeEach(async () => {
+      const newUser: User = await service.create({
+        name: 'test',
+        age: 20,
+      });
+      code = newUser.code;
+    });
+
+    it('should return a user', async () => {
+      const result: User = await service.findOne(code);
+
+      expect(result.code).toEqual(code);
+    });
+
+    afterAll(() => {
+      mockUsers.pop();
+      expect(mockUsers.length).toEqual(0);
+    });
+  });
 });
 ```
 
-위의 코드를 보면 `Test.createTestingModule()` 을 통해 테스트 모듈을 생성하고, `Test.createTestingModule().compile()` 을 통해 컴파일을 해주고 있습니다. 이렇게 생성된 테스트 모듈을 통해 테스트 코드를 작성할 수 있습니다.
+위의 코드를 보면 `Test.createTestingModule()` 을 통해 테스트 모듈을 생성하고, `Test.createTestingModule().compile()` 을 통해 컴파일을 해주고 있습니다. 이렇게 생성된 테스트 모듈은 런타임 시 실제 NestJS 애플리케이션의 해당 모듈과 동일한 환경을 가지고 있습니다.
+
+### create 메서드 테스트 코드 작성
+
+````typescript
+
 
 ## 테스트 코드 실행
 
@@ -269,7 +364,7 @@ describe('UsersService', () => {
 
 ```bash
 yarn test
-```
+````
 
 ## 테스트 코드 커버리지 확인
 
