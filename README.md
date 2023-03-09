@@ -282,7 +282,3 @@ yarn test:cov
 ## 참고
 
 - [NestJS 공식 문서 - Testing](https://docs.nestjs.com/fundamentals/testing)
-
-```
-
-```
