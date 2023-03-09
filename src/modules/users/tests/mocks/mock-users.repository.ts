@@ -2,7 +2,7 @@ import { CreateUserInput } from '../../dto/create-user.input';
 import { User } from '../../entities/user.entity';
 import { mockUsers } from './mock-users';
 
-export class MockRepository {
+export class MockUserRepository {
   async create(createUserInput: CreateUserInput): Promise<User> {
     const user: User = new User({
       name: createUserInput.name,

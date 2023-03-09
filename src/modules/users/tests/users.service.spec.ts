@@ -7,7 +7,7 @@ import { DeleteUserTransaction } from '../transactions/delete-user.transaction';
 import { UpdateUserTransaction } from '../transactions/update-user.transaction';
 import { UsersService } from '../users.service';
 import { mockUsers } from './mocks/mock-users';
-import { MockRepository } from './mocks/mock-users.repository';
+import { MockUserRepository } from './mocks/mock-users.repository';
 import { MockDeleteUserTransaction } from './mocks/transactions/mock-delete-user.transaction';
 import { MockUpdateUserTransaction } from './mocks/transactions/mock-update-user.transaction';
 
@@ -18,7 +18,7 @@ describe('UsersService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UsersService,
-        { provide: getRepositoryToken(User), useClass: MockRepository },
+        { provide: getRepositoryToken(User), useClass: MockUserRepository },
         { provide: UpdateUserTransaction, useClass: MockUpdateUserTransaction },
         { provide: DeleteUserTransaction, useClass: MockDeleteUserTransaction },
       ],
