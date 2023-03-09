@@ -221,6 +221,7 @@ import { Repository } from 'typeorm';
 import { CreateUserInput } from '../dto/create-user.input';
 import { UpdateUserInput } from '../dto/update-user.input';
 import { User } from '../entities/user.entity';
+import { DeleteUserTransaction } from '../transactions/delete-user.transaction';
 import { UpdateUserTransaction } from '../transactions/update-user.transaction';
 import { UsersService } from '../users.service';
 
@@ -252,27 +253,29 @@ class MockRepository {
       }
     }
   }
-
-  async update(updateUserInput: UpdateUserInput) {
-    const user: User = await this.findOne({
-      where: { code: updateUserInput.code },
-    });
-    user.name = updateUserInput.name;
-    user.age = updateUserInput.age;
-    return user;
-  }
-
-  async delete(code: string): Promise<void> {
-    mockUsers.filter((user) => user.code !== code);
-  }
 }
 
 class MockUpdateUserTransaction {
-  constructor(private readonly repository: MockRepository) {}
-
   async run({ updateUserInput }: { updateUserInput: UpdateUserInput }) {
-    await this.repository.update(updateUserInput);
-    return this.repository.findOne({ where: { code: updateUserInput.code } });
+    const user: User = mockUsers.find(
+      (user) => user.code === updateUserInput.code
+    );
+    user.name = updateUserInput.name;
+    user.age = updateUserInput.age;
+
+    return user;
+  }
+}
+
+class MockDeleteUserTransaction {
+  async run({ code }: { code: string }) {
+    const user: User = mockUsers.find((user) => user.code === code);
+    for (let i = 0; i < mockUsers.length; i++) {
+      if (mockUsers[i].code === code) {
+        mockUsers.splice(i, 1);
+      }
+    }
+    return user;
   }
 }
 
@@ -280,6 +283,7 @@ describe('UsersService', () => {
   let service: UsersService;
   let repository: Repository<User>;
   let updateUserTransaction: UpdateUserTransaction;
+  let deleteUserTransaction: DeleteUserTransaction;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -287,6 +291,7 @@ describe('UsersService', () => {
         UsersService,
         { provide: getRepositoryToken(User), useClass: MockRepository },
         { provide: UpdateUserTransaction, useClass: MockUpdateUserTransaction },
+        { provide: DeleteUserTransaction, useClass: MockDeleteUserTransaction },
       ],
     }).compile();
 
@@ -294,6 +299,9 @@ describe('UsersService', () => {
     repository = module.get<Repository<User>>(getRepositoryToken(User));
     updateUserTransaction = module.get<UpdateUserTransaction>(
       UpdateUserTransaction
+    );
+    deleteUserTransaction = module.get<DeleteUserTransaction>(
+      DeleteUserTransaction
     );
 
     jest.clearAllMocks();
@@ -348,10 +356,55 @@ describe('UsersService', () => {
       expect(mockUsers.length).toEqual(0);
     });
   });
+
+  describe('update', () => {
+    let code: string;
+    beforeEach(async () => {
+      const newUser: User = await service.create({
+        name: 'test',
+        age: 20,
+      });
+      code = newUser.code;
+    });
+
+    it('should update a user', async () => {
+      const updateUserInput: UpdateUserInput = {
+        code,
+        name: 'test2',
+        age: 30,
+      };
+      const result = await service.update(updateUserInput);
+      expect(result.name).toEqual(updateUserInput.name);
+      expect(result.age).toEqual(updateUserInput.age);
+    });
+
+    afterAll(() => {
+      mockUsers.pop();
+      expect(mockUsers.length).toEqual(0);
+    });
+  });
+
+  describe('remove', () => {
+    let code: string;
+    beforeEach(async () => {
+      const newUser: User = await service.create({
+        name: 'test',
+        age: 20,
+      });
+      code = newUser.code;
+    });
+
+    it('should remove a user', async () => {
+      await service.remove(code);
+      expect(mockUsers.length).toEqual(0);
+    });
+  });
 });
 ```
 
 위의 코드를 보면 `Test.createTestingModule()` 을 통해 테스트 모듈을 생성하고, `Test.createTestingModule().compile()` 을 통해 컴파일을 해주고 있습니다. 이렇게 생성된 테스트 모듈은 런타임 시 실제 NestJS 애플리케이션의 해당 모듈과 동일한 환경을 가지고 있습니다.
+
+또한, MockRepository, MockUpdateUserTransaction, MockDeleteUserTransaction 클래스를 통해 각각의 Repository, Transaction 클래스를 Mocking 해주고 있습니다.
 
 ### create 메서드 테스트 코드 작성
 
