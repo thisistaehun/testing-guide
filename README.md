@@ -42,8 +42,6 @@ src
 │ │ └── update-user.dto.ts
 │ ├── entities
 │ │ └── user.entity.ts
-│ ├── transactions
-│ │ └── update-user.transaction.ts
 │ ├── users.module.ts
 │ ├── users.resolver.ts
 │ ├── users.resolver.spec.ts  
