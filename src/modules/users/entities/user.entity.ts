@@ -6,6 +6,11 @@ import { Column, Entity } from 'typeorm';
 @ObjectType()
 @Entity({ name: 'users' })
 export class User extends CommonEntity {
+  constructor(partial: Partial<User>) {
+    super();
+    Object.assign(this, partial);
+  }
+
   @Field(() => String, { description: 'user name' })
   @Column({ name: 'name', type: 'varchar', length: 255 })
   name: string;

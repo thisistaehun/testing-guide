@@ -13,17 +13,17 @@ export class UsersService {
     private readonly usersRepository: Repository<User>,
     private readonly updateUserTransaction: UpdateUserTransaction
   ) {}
-  create(createUserInput: CreateUserInput) {
+  async create(createUserInput: CreateUserInput): Promise<User> {
     return this.usersRepository.save(
       this.usersRepository.create(createUserInput)
     );
   }
 
-  findAll() {
+  async findAll(): Promise<User[]> {
     return this.usersRepository.find();
   }
 
-  findOne(code: string) {
+  async findOne(code: string): Promise<User> {
     return this.usersRepository.findOne({
       where: {
         code,
@@ -31,11 +31,15 @@ export class UsersService {
     });
   }
 
-  async update(updateUserInput: UpdateUserInput) {
+  async update(updateUserInput: UpdateUserInput): Promise<User> {
     return this.updateUserTransaction.run({ updateUserInput });
   }
 
-  async remove(code: string) {
-    return this.usersRepository.delete(code);
+  async remove(code: string): Promise<User> {
+    const user: User = await this.findOne(code);
+    const deleted = await this.usersRepository.delete(code);
+    if (deleted.affected > 0) {
+      return user;
+    }
   }
 }
