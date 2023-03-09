@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { CreateUserInput } from './dto/create-user.input';
 import { UpdateUserInput } from './dto/update-user.input';
 import { User } from './entities/user.entity';
+import { DeleteUserTransaction } from './transactions/delete-user.transaction';
 import { UpdateUserTransaction } from './transactions/update-user.transaction';
 
 @Injectable()
@@ -11,7 +12,8 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
-    private readonly updateUserTransaction: UpdateUserTransaction
+    private readonly updateUserTransaction: UpdateUserTransaction,
+    private readonly deleteUserTransaction: DeleteUserTransaction
   ) {}
   async create(createUserInput: CreateUserInput): Promise<User> {
     return this.usersRepository.save(
@@ -36,10 +38,6 @@ export class UsersService {
   }
 
   async remove(code: string): Promise<User> {
-    const user: User = await this.findOne(code);
-    const deleted = await this.usersRepository.delete(code);
-    if (deleted.affected > 0) {
-      return user;
-    }
+    return this.deleteUserTransaction.run({ code });
   }
 }
