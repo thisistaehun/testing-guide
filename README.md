@@ -404,18 +404,13 @@ describe('UsersService', () => {
 
 또한, MockRepository, MockUpdateUserTransaction, MockDeleteUserTransaction 클래스를 통해 각각의 Repository, Transaction 클래스를 Mocking 해주고 있습니다.
 
-### create 메서드 테스트 코드 작성
-
-````typescript
-
-
 ## 테스트 코드 실행
 
 테스트 코드를 작성했다면 다음과 같이 테스트 코드를 실행할 수 있습니다.
 
 ```bash
 yarn test
-````
+```
 
 ## 테스트 코드 커버리지 확인
 
